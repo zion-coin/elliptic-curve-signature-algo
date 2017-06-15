@@ -2,8 +2,8 @@
   * and should not be used in production for obvious reasons.
   * If you would like to contribute, you are more than welcome to.
   *
-  * const GcompressedLE   = bigInt("DB4FF10EC057E9AE26B07D0280B7F4341DA5D1B1EAE06C7D", 16); [LE]
-  * const GunCompressedLE = bigInt("DB4FF10EC057E9AE26B07D0280B7F4341DA5D1B1EAE06C7D9B2F2F6D9C5628A7844163D015BE86344082AA88D95E2F9D", 16); [LE]
+  * const GcompressedLE   = bigInt("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16);
+  * const GunCompressedLE = bigInt("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16);
   *
   * Actual curve: y^2 = x^3 + Acurve * x + Bcurve
   *
@@ -11,19 +11,19 @@
 
 const bigInt = require("big-integer");
 
-// Pcurve = 2**192 - 2**32 - 2**12 - 2**8 - 2**7 - 2**6 - 2**3 - 1 OR FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFEE37
-const Pcurve = bigInt("6277101735386680763835789423207666416102355444459739541047"); // The proven prime
-const N      = bigInt("FFFFFFFFFFFFFFFFFFFFFFFE26F2FC170F69466A74DEFD8D", 16); // Number of points in the field
-const Acurve = 0; // These two defines the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
-const Bcurve = 3; // These two defines the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
-const Gx     = bigInt("DB4FF10EC057E9AE26B07D0280B7F4341DA5D1B1EAE06C7D", 16);
-const Gy     = bigInt("9B2F2F6D9C5628A7844163D015BE86344082AA88D95E2F9D", 16);
+// Pcurve = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 -1, 10;
+const Pcurve = bigInt("115792089237316195423570985008687907853269984665640564039457584007908834671663"); // The proven prime
+const N      = bigInt("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16); // Number of points in the field
+const Acurve = 0; // These two defines the elliptic curve.
+const Bcurve = 7; // y^2 = x^3 + Acurve * x + Bcurve
+const Gx     = bigInt("55066263022277343669578718895168534326250603453777594175500187360389116729240");
+const Gy     = bigInt("32670510020758816978083085130507043184471273380659243275938904335757337482424");
 const GPoint = [Gx, Gy]; // This is our generator point. Trillions of dif ones possible
 
 // Individual Transaction/Personal Information
-const privKey           = bigInt("A0DC65FFCA799873CBEA0AC274015B9526505DAAAED38515", 16); // replace with any private key
-const RandNum           = bigInt("286956185438058443321138297203732852104207394385"); // replace with a truly random number
-const HashOfThingToSign = bigInt("860321123191016110461769718280936696377728562727"); // the hash of your message/transaction
+const privKey           = bigInt("A0DC65FFCA799873CBEA0AC274015B9526505DAAAED385155425F7337704883E", 16) // replace with any private key
+const RandNum           = bigInt("28695618543805844332113829720373285210420739438570883203839696518176414791234") // replace with a truly random number
+const HashOfThingToSign = bigInt("86032112319101611046176971828093669637772856272773459297323797145286374828050") // the hash of your message/transaction
 
 
 function modulo(n: bigInt, m: bigInt) {
@@ -84,10 +84,51 @@ function ECmultiply(GenPoint: Array<bigInt>, ScalarHex: bigInt) {
 }
 
 function zfill(s: string) {
-  while (s.length < 48) {
+  while (s.length < 64) {
     s = "0" + s;
   }
   return s;
+}
+
+function verify() {
+
+}
+
+// uncompressed is the accumulation of both the x and y points
+// compressed is the public key to share in transactions
+// address is the public address tho whom someone can send coin
+function PublicKeyGenerate(PrivateKey: string | number | bigInt) {
+  if (typeof PrivateKey === 'number')
+    PrivateKey = bigInt(PrivateKey);
+  if (typeof PrivateKey === 'string')
+    PrivateKey = bigInt(PrivateKey, 16);
+
+  let PublicKey = ECmultiply(GPoint, privKey);
+  let Px = zfill(PublicKey[0].toString(16));
+
+  let uncompressed = PublicKey[0].toString(16) + PublicKey[1].toString(16);
+  let compressed   = "04" + Px + Py;
+  let address      = (modulo(PublicKey[1], 2).eq(1))
+                        ? "03" + Px
+                        : "02" + Px;
+
+  return (uncompressed, compressed, address);
+}
+
+function PublicAddressGenerate(PrivateKey: string | number | bigInt) {
+  if (typeof PrivateKey === 'number')
+    PrivateKey = bigInt(PrivateKey);
+  if (typeof PrivateKey === 'string')
+    PrivateKey = bigInt(PrivateKey, 16);
+
+  let PublicKey = ECmultiply(GPoint, privKey);
+  let Px = zfill(PublicKey[0].toString(16));
+
+  if (modulo(PublicKey[1], 2).eq(1)) {
+    return "03" + Px;
+  } else {
+    return "02" + Px;
+  }
 }
 
 console.log();
