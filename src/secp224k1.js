@@ -14,8 +14,8 @@ const bigInt = require("big-integer");
 // Pcurve = 2**224 - 2**32 - 2**12 - 2**11 - 2**9 - 2**7 - 2**4 - 2**1 - 1 OR FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFE56D
 const Pcurve = bigInt("26959946667150639794667015087019630673637144422540572481099315275117"); // The proven prime
 const N      = bigInt("0000000000000000000000000001DCE8D2EC6184CAF0A971769FB1F7", 16); // Number of points in the field
-const Acurve = 0; // These two defines the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
-const Bcurve = 5; // These two defines the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
+const Acurve = 0; // These two are defined on the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
+const Bcurve = 5; // These two are defined on the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
 const Gx     = bigInt("A1455B334DF099DF30FC28A169A467E9E47075A90F7E650EB6B7A45C", 16);
 const Gy     = bigInt("7E089FED7FBA344282CAFBD6F7E319F7C0B0BD59E2CA4BDB556D61A5", 16);
 const GPoint = [Gx, Gy]; // This is our generator point. Trillions of dif ones possible
@@ -28,6 +28,13 @@ const HashOfThingToSign = bigInt("8603211231910161104617697182809366963777285627
 
 function modulo(n: bigInt, m: bigInt) {
   return n.mod(m).add(m).mod(m);
+}
+
+function zfill(s: string) {
+  while (s.length < 56) {
+    s = "0" + s;
+  }
+  return s;
 }
 
 function modInv(a: bigInt, n: bigInt = Pcurve) {
@@ -83,11 +90,26 @@ function ECmultiply(GenPoint: Array<bigInt>, ScalarHex: bigInt) {
   return Q;
 }
 
-function zfill(s: string) {
-  while (s.length < 56) {
-    s = "0" + s;
-  }
-  return s;
+// uncompressed is the accumulation of both the x and y points
+// compressed is the public key to share in transactions
+// address is the public address tho whom someone can send coin
+function PublicKeyGenerate(PrivateKey: string | number | bigInt) {
+  if (typeof PrivateKey === 'number')
+    PrivateKey = bigInt(PrivateKey);
+  if (typeof PrivateKey === 'string')
+    PrivateKey = bigInt(PrivateKey, 16);
+
+  let PublicKey = ECmultiply(GPoint, privKey);
+  let Px = zfill(PublicKey[0].toString(16));
+  let Py = zfill(PublicKey[1].toString(16));
+
+  let uncompressed = PublicKey[0].toString(16) + PublicKey[1].toString(16);
+  let compressed   = "04" + Px + Py;
+  let address      = (modulo(PublicKey[1], 2).eq(1))
+                        ? "03" + Px
+                        : "02" + Px;
+
+  return { uncompressed, compressed, address };
 }
 
 console.log();
@@ -144,3 +166,5 @@ let validation = ECadd(u1, u2);
 let validationX = validation[0];
 
 console.log("Signature Verified", validationX.eq(r));
+
+module.exports = { PublicKeyGenerate };

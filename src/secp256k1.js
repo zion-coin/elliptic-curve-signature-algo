@@ -9,13 +9,16 @@
   *
   **/
 
-const bigInt = require("big-integer");
+const crypto      = require('crypto');
+const RIPEMD160   = require('ripemd160');
+const base58check = require('base58check')
+const bigInt      = require("big-integer");
 
 // Pcurve = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 -1, 10;
 const Pcurve = bigInt("115792089237316195423570985008687907853269984665640564039457584007908834671663"); // The proven prime
 const N      = bigInt("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16); // Number of points in the field
-const Acurve = 0; // These two defines the elliptic curve.
-const Bcurve = 7; // y^2 = x^3 + Acurve * x + Bcurve
+const Acurve = 0; // These two are defined on the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
+const Bcurve = 7; // These two are defined on the elliptic curve. y^2 = x^3 + Acurve * x + Bcurve
 const Gx     = bigInt("55066263022277343669578718895168534326250603453777594175500187360389116729240");
 const Gy     = bigInt("32670510020758816978083085130507043184471273380659243275938904335757337482424");
 const GPoint = [Gx, Gy]; // This is our generator point. Trillions of dif ones possible
@@ -28,6 +31,13 @@ const HashOfThingToSign = bigInt("8603211231910161104617697182809366963777285627
 
 function modulo(n: bigInt, m: bigInt) {
   return n.mod(m).add(m).mod(m);
+}
+
+function zfill(s: string) {
+  while (s.length < 48) {
+    s = "0" + s;
+  }
+  return s;
 }
 
 function modInv(a: bigInt, n: bigInt = Pcurve) {
@@ -83,14 +93,11 @@ function ECmultiply(GenPoint: Array<bigInt>, ScalarHex: bigInt) {
   return Q;
 }
 
-function zfill(s: string) {
-  while (s.length < 64) {
-    s = "0" + s;
-  }
-  return s;
+function generateSig() {
+
 }
 
-function verify() {
+function verifySig() {
 
 }
 
@@ -103,85 +110,104 @@ function PublicKeyGenerate(PrivateKey: string | number | bigInt) {
   if (typeof PrivateKey === 'string')
     PrivateKey = bigInt(PrivateKey, 16);
 
-  let PublicKey = ECmultiply(GPoint, privKey);
+  let PublicKey = ECmultiply(GPoint, PrivateKey);
   let Px = zfill(PublicKey[0].toString(16));
+  let Py = zfill(PublicKey[1].toString(16));
 
-  let uncompressed = PublicKey[0].toString(16) + PublicKey[1].toString(16);
-  let compressed   = "04" + Px + Py;
-  let address      = (modulo(PublicKey[1], 2).eq(1))
+  let uncompressed = "04" + PublicKey[0].toString(16) + PublicKey[1].toString(16);
+  let compressed   = (modulo(PublicKey[1], 2).eq(1))
                         ? "03" + Px
                         : "02" + Px;
 
-  return (uncompressed, compressed, address);
+  return { uncompressed, compressed };
 }
 
-function PublicAddressGenerate(PrivateKey: string | number | bigInt) {
-  if (typeof PrivateKey === 'number')
-    PrivateKey = bigInt(PrivateKey);
-  if (typeof PrivateKey === 'string')
-    PrivateKey = bigInt(PrivateKey, 16);
+function sha256(secret: string | buffer) {
+  if (typeof secret === 'string')
+    secret = Buffer.from(secret, 'hex');
 
-  let PublicKey = ECmultiply(GPoint, privKey);
-  let Px = zfill(PublicKey[0].toString(16));
-
-  if (modulo(PublicKey[1], 2).eq(1)) {
-    return "03" + Px;
-  } else {
-    return "02" + Px;
-  }
+  return crypto.createHash('sha256')
+               .update(secret)
+               .digest('hex');
 }
 
-console.log();
-console.log("******* Public Key Generation *********");
-console.log();
-let PublicKey = ECmultiply(GPoint, privKey);
-let Px = zfill(PublicKey[0].toString(16));
-let Py = zfill(PublicKey[1].toString(16));
-console.log("the private key:")
-console.log( bigInt(privKey, 16).toString(10) + " (DECIMAL)" );
-console.log();
-console.log("the uncompressed public key (NOT ADDRESS):");
-console.log(PublicKey[0].toString(16) + PublicKey[1].toString(16));
-console.log();
-console.log("the uncompressed public key (HEX):");
-console.log("04" + Px + Py);
-console.log();
-console.log("the official Public Key (Address) - compressed:");
+function doubleSha256(secret: string | buffer) {
+  if (typeof secret === 'string')
+    secret = Buffer.from(secret, 'hex');
 
-if (modulo(PublicKey[1], 2).eq(1)) {
-  console.log("03" + Px);
-} else {
-  console.log("02" + Px);
+  const hash = crypto.createHash('sha256')
+                     .update(secret)
+                     .digest('hex');
+  return crypto.createHash('sha256')
+               .update(Buffer.from(hash, 'hex'))
+               .digest('hex');
 }
 
-console.log();
-console.log("******* Signature Generation *********");
-let RandSignPoint = ECmultiply(GPoint, RandNum);
-let Sx = zfill(RandSignPoint[0].toString(16));
-let Sy = zfill(RandSignPoint[1].toString(16));
+function ripemd160(secret: string | buffer) {
+  if (typeof secret === 'string')
+    secret = Buffer.from(secret, 'hex');
 
-let r = modulo(RandSignPoint[0], N);
-console.log("R", r.toString());
+  return new RIPEMD160().update(secret)
+                      .digest('hex');
+}
 
-let s = modulo(HashOfThingToSign.add( r.times(privKey) ).times(modInv(RandNum, N)), N);
-console.log("S", s.toString());
-// s = ((HashOfThingToSign + r*privKey)*(modinv(RandNum,N))) % N; print "s =", s
+// console.log();
+// console.log("******* Public Key Generation *********");
+// console.log();
+// let PublicKey = ECmultiply(GPoint, privKey);
+// let Px = zfill(PublicKey[0].toString(16));
+// let Py = zfill(PublicKey[1].toString(16));
+// console.log("the private key:")
+// console.log( bigInt(privKey, 16).toString(10) + " (DECIMAL)" );
+// console.log();
+// console.log("the uncompressed public key (NOT ADDRESS):");
+// console.log(PublicKey[0].toString(16) + PublicKey[1].toString(16));
+// console.log();
+// console.log("the uncompressed public key (HEX):");
+// console.log("04" + Px + Py);
+// console.log();
+// console.log("the official Public Key (Address) - compressed:");
+//
+// if (modulo(PublicKey[1], 2).eq(1)) {
+//   console.log("03" + Px);
+// } else {
+//   console.log("02" + Px);
+// }
+//
+// console.log();
+// console.log("******* Signature Generation *********");
+// let RandSignPoint = ECmultiply(GPoint, RandNum);
+// let Sx = zfill(RandSignPoint[0].toString(16));
+// let Sy = zfill(RandSignPoint[1].toString(16));
+//
+// let r = modulo(RandSignPoint[0], N);
+// console.log("R", r.toString());
+//
+// let s = modulo(HashOfThingToSign.add( r.times(privKey) ).times(modInv(RandNum, N)), N);
+// console.log("S", s.toString());
+// // s = ((HashOfThingToSign + r*privKey)*(modinv(RandNum,N))) % N; print "s =", s
+//
+// console.log();
+// console.log("******* Signature Verification *********");
+//
+// let w = modInv(s, N);
+// console.log("w", w.toString());
+//
+// let u1  = ECmultiply( GPoint, modulo(HashOfThingToSign.times(w), N) );
+// let u1x = u1[0];
+// let u1y = u1[1];
+//
+// let u2 = ECmultiply( PublicKey, modulo(r.times(w), N) )
+// let u2x = u2[0];
+// let u2y = u2[1];
+//
+// let validation = ECadd(u1, u2);
+// let validationX = validation[0];
+//
+// console.log("Signature Verified", validationX.eq(r));
 
-console.log();
-console.log("******* Signature Verification *********");
-
-let w = modInv(s, N);
-console.log("w", w.toString());
-
-let u1  = ECmultiply( GPoint, modulo(HashOfThingToSign.times(w), N) );
-let u1x = u1[0];
-let u1y = u1[1];
-
-let u2 = ECmultiply( PublicKey, modulo(r.times(w), N) )
-let u2x = u2[0];
-let u2y = u2[1];
-
-let validation = ECadd(u1, u2);
-let validationX = validation[0];
-
-console.log("Signature Verified", validationX.eq(r));
+module.exports = {
+  PublicKeyGenerate,
+  sha256,
+  doubleSha256
+};
