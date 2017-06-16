@@ -3,6 +3,7 @@ const RIPEMD160 = require('ripemd160');
 const bigInt    = require("big-integer");
 const secp256k1 = require('../lib/secp256k1');
 const bs58check = require('bs58check');
+const bs58      = require('bs58');
 
 // const privKey = bigInt("A0DC65FFCA799873CBEA0AC274015B9526505DAAAED385155425F7337704883E", 16)
 const privKey = bigInt("18E14A7B6A307F426A94F8114701E7C8E774E7F9A47E2C2035DB29A206321725", 16);
@@ -36,15 +37,18 @@ console.log("Step56) doubleSha256          - ", secondThirdSha256);
 
 // step 7-8 - take the first 4 bytes from secondThirdSha256 and add
 // to the end of the ripemd160
-let secondRipemd160 = firstRipemd160 + secondThirdSha256.slice(0,8);
+let secondRipemd160 = versionByte + secondThirdSha256.slice(0,8);
 console.log("Step78) secondRipemd160       - ", secondRipemd160);
 // 00010966776006953D5567439E5E39F86A0D273BEED61967F6
 
 // step 9 - convert the elongated ripemd160 to a base58check encoding
-let address = base58checkEncode(secondRipemd160);
+let address = base58Encode(secondRipemd160);
 console.log("Step9) address                - ", address);
 // csU3KSAQMEYLPudM8UWJVxFfptcZSDvXF1LYM
 // 16UwLL9Risc3QfPqBUvKofHmBQ7wMtjvM
+
+// NOTICE
+// steps 5-9 can be done with base58check;
 
 
 function base58checkEncode(payload) {
@@ -53,6 +57,14 @@ function base58checkEncode(payload) {
 
   return bs58check.encode(payload);
 }
+
+function base58Encode(payload) {
+  if (typeof payload === 'string')
+    payload = Buffer.from(payload, 'hex');
+
+  return bs58.encode(payload);
+}
+
 
 function base58checkDecode(address) {
   return bs58check.decode(address, 'hex');
