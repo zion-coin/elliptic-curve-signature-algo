@@ -1,5 +1,7 @@
 # elliptic-curve-signature-algo
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/zion-coin/elliptic-curve-signature-algo.svg)](https://greenkeeper.io/)
+
 ### This is a thorough implementation of the original
 
 
