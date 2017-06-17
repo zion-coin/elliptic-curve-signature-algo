@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "lint+build+test": "npm run lint && npm run build && npm run test",
-    "lint": "echo linting... && eslint ./tests/**/*.js && echo 'successfully linted'",
+    "lint": "echo linting... && eslint ./src/**/*.js && echo 'successfully linted'",
     "build": "echo building... && babel src/ -d lib/ && echo 'successfully built'",
     "prepublish": "yarn run build",
     "test": "echo running server tests... && tape tests/**/*.js && echo 'successfully completed tests'"
@@ -15,7 +15,6 @@
   "devDependencies": {
     "babel-cli": "^6.24.1",
     "babel-eslint": "^7.2.3",
-    "babel-plugin-uglify": "^1.0.2",
     "babel-preset-flow": "^6.23.0",
     "eslint": "^4.0.0",
     "flow-bin": "^0.48.0",
