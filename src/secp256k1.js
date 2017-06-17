@@ -93,7 +93,7 @@ function ECmultiply(GenPoint: Array<bigInt>, ScalarHex: bigInt) {
   return Q;
 }
 
-function generateSig(message: string | bigInt, privKey: string | bigInt) {
+function generateSignature(message: string | bigInt, privKey: string | bigInt) {
   // Ensure proper format
   if (typeof message === 'string')
     message = bigInt(message, 16);
@@ -104,11 +104,11 @@ function generateSig(message: string | bigInt, privKey: string | bigInt) {
   let RandNum = bigInt(crypto.randomBytes(255));
   let RandSignPoint = ECmultiply(GPoint, RandNum);
 
-  let RandSignPoint = modulo(RandSignPoint[0], N);
+  let r = modulo(RandSignPoint[0], N);
 
   let signature = modulo(message.add( r.times(privKey) ).times(modInv(RandNum, N)), N);
 
-  return [RandSignPoint, signature];
+  return [r, signature];
 }
 
 function verifySignature(message: string | bigInt, RandSignPoint: string | bigInt, signature: string | bigInt) {
@@ -202,37 +202,37 @@ function ripemd160(secret: string | buffer) {
 // }
 //
 // console.log();
-console.log("******* Signature Generation *********");
-let RandSignPoint = ECmultiply(GPoint, RandNum);
-let Sx = zfill(RandSignPoint[0].toString(16));
-let Sy = zfill(RandSignPoint[1].toString(16));
-
-let r = modulo(RandSignPoint[0], N);
-console.log("R", r.toString());
-
-let s = modulo(HashOfThingToSign.add( r.times(privKey) ).times(modInv(RandNum, N)), N);
-console.log("S", s.toString());
-// s = ((HashOfThingToSign + r*privKey)*(modinv(RandNum,N))) % N; print "s =", s
-
-console.log();
-console.log("******* Signature Verification *********");
-
-let w = modInv(s, N);
-console.log("w", w.toString());
-
-let u1  = ECmultiply( GPoint, modulo(HashOfThingToSign.times(w), N) );
-let u1x = u1[0];
-let u1y = u1[1];
-
-let u2 = ECmultiply( PublicKey, modulo(r.times(w), N) )
-let u2x = u2[0];
-let u2y = u2[1];
-
-let validation = ECadd(u1, u2);
-let validationX = validation[0];
-
-console.log("Signature Verified", validationX.eq(r));
-
+// console.log("******* Signature Generation *********");
+// let RandSignPoint = ECmultiply(GPoint, RandNum);
+// let Sx = zfill(RandSignPoint[0].toString(16));
+// let Sy = zfill(RandSignPoint[1].toString(16));
+//
+// let r = modulo(RandSignPoint[0], N);
+// console.log("R", r.toString());
+//
+// let s = modulo(HashOfThingToSign.add( r.times(privKey) ).times(modInv(RandNum, N)), N);
+// console.log("S", s.toString());
+// // s = ((HashOfThingToSign + r*privKey)*(modinv(RandNum,N))) % N; print "s =", s
+//
+// console.log();
+// console.log("******* Signature Verification *********");
+//
+// let w = modInv(s, N);
+// console.log("w", w.toString());
+//
+// let u1  = ECmultiply( GPoint, modulo(HashOfThingToSign.times(w), N) );
+// let u1x = u1[0];
+// let u1y = u1[1];
+//
+// let u2 = ECmultiply( PublicKey, modulo(r.times(w), N) )
+// let u2x = u2[0];
+// let u2y = u2[1];
+//
+// let validation = ECadd(u1, u2);
+// let validationX = validation[0];
+//
+// console.log("Signature Verified", validationX.eq(r));
+//
 module.exports = {
   PublicKeyGenerate,
   verifySignature,

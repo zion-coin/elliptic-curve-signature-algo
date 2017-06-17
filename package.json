@@ -1,18 +1,24 @@
 {
   "name": "elliptic-curve-signature-algo",
-  "version": "1.2.9",
+  "version": "1.2.11",
   "description": "Implementation of bitcoin's signature algorithm in Javascript for educational purposes",
   "main": "lib/index.js",
   "scripts": {
-    "build": "babel src/ -d lib/",
-    "prepublish": "yarn run build"
+    "lint+build+test": "npm run lint && npm run build && npm run test",
+    "lint": "echo linting... && eslint ./tests/**/*.js && echo 'successfully linted'",
+    "build": "echo building... && babel src/ -d lib/ && echo 'successfully built'",
+    "prepublish": "yarn run build",
+    "test": "echo running server tests... && tape tests/**/*.js && echo 'successfully completed tests'"
   },
   "author": "Craig OConnor",
   "license": "ISC",
   "devDependencies": {
     "babel-cli": "^6.24.1",
+    "babel-eslint": "^6.1.2",
     "babel-preset-flow": "^6.23.0",
-    "flow-bin": "^0.48.0"
+    "eslint": "^3.19.0",
+    "flow-bin": "^0.48.0",
+    "tape": "^4.6.3"
   },
   "dependencies": {
     "base58check": "^2.0.0",
