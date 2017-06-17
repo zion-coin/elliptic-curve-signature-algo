@@ -1,3 +1,4 @@
+// @flow
 /** This implementation is for educaitonal purposes only
   * and should not be used in production for obvious reasons.
   * If you would like to contribute, you are more than welcome to.

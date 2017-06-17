@@ -1,3 +1,4 @@
+// @flow
 /** This implementation is for educaitonal purposes only
   * and should not be used in production for obvious reasons.
   * If you would like to contribute, you are more than welcome to.
@@ -29,18 +30,18 @@ const RandNum           = bigInt("2869561854380584433211382972037328521042073943
 const HashOfThingToSign = bigInt("86032112319101611046176971828093669637772856272773459297323797145286374828050") // the hash of your message/transaction
 
 
-function modulo(n: bigInt, m: bigInt) {
+function modulo(n: bigInt, m: bigInt): bigInt {
   return n.mod(m).add(m).mod(m);
 }
 
-function zfill(s: string) {
+function zfill(s: string): bigInt {
   while (s.length < 48) {
     s = "0" + s;
   }
   return s;
 }
 
-function modInv(a: bigInt, n: bigInt = Pcurve) {
+function modInv(a: bigInt, n: bigInt = Pcurve): bigInt {
   let lm   = bigInt(1),
       hm   = bigInt(0),
       high = n,
@@ -60,7 +61,7 @@ function modInv(a: bigInt, n: bigInt = Pcurve) {
   return modulo(lm, n);
 }
 
-function ECadd(a: Array<bigInt>, b: Array<bigInt>) {
+function ECadd(a: Array<bigInt>, b: Array<bigInt>): bigInt {
   const LamAdd = modulo(b[1].minus(a[1]).times( modInv( b[0].minus(a[0]) ) ), Pcurve);
   const x      = modulo(LamAdd.times(LamAdd).minus(a[0]).minus(b[0]), Pcurve);
   const y      = modulo(LamAdd.times( a[0].minus(x) ).minus(a[1]), Pcurve);
@@ -76,7 +77,7 @@ function ECdouble(a: Array<bigInt>) {
   return [x, y];
 }
 
-function ECmultiply(GenPoint: Array<bigInt>, ScalarHex: bigInt) {
+function ECmultiply(GenPoint: Array<bigInt>, ScalarHex: bigInt): bigInt {
   if (ScalarHex.eq(0) || ScalarHex.greaterOrEquals(N)) throw "Invalid Scalar/Private Key";
 
   const ScalarBinary = ScalarHex.toString(2);
@@ -93,7 +94,7 @@ function ECmultiply(GenPoint: Array<bigInt>, ScalarHex: bigInt) {
   return Q;
 }
 
-function generateSignature(message: string | bigInt, privKey: string | bigInt) {
+function generateSignature(message: string | bigInt, privKey: string | bigInt): Array<bigInt> {
   // Ensure proper format
   if (typeof message === 'string')
     message = bigInt(message, 16);
@@ -111,7 +112,7 @@ function generateSignature(message: string | bigInt, privKey: string | bigInt) {
   return [r, signature];
 }
 
-function verifySignature(message: string | bigInt, RandSignPoint: string | bigInt, signature: string | bigInt) {
+function verifySignature(message: string | bigInt, RandSignPoint: string | bigInt, signature: string | bigInt): bool {
   if (typeof message === 'string')
     message = bigInt(message, 16);
   if (typeof signature === 'string')
@@ -131,7 +132,11 @@ function verifySignature(message: string | bigInt, RandSignPoint: string | bigIn
 // uncompressed is the accumulation of both the x and y points
 // compressed is the public key to share in transactions
 // address is the public address tho whom someone can send coin
-function PublicKeyGenerate(PrivateKey: string | number | bigInt) {
+interface Key {
+  uncompressed: bigInt,
+  compressed: bigInt
+}
+function PublicKeyGenerate(PrivateKey: string | number | bigInt): Key {
   if (typeof PrivateKey === 'number')
     PrivateKey = bigInt(PrivateKey);
   if (typeof PrivateKey === 'string')
@@ -149,7 +154,7 @@ function PublicKeyGenerate(PrivateKey: string | number | bigInt) {
   return { uncompressed, compressed };
 }
 
-function sha256(secret: string | buffer) {
+function sha256(secret: string | buffer): string {
   if (typeof secret === 'string')
     secret = Buffer.from(secret, 'hex');
 
@@ -158,7 +163,7 @@ function sha256(secret: string | buffer) {
                .digest('hex');
 }
 
-function doubleSha256(secret: string | buffer) {
+function doubleSha256(secret: string | buffer): string {
   if (typeof secret === 'string')
     secret = Buffer.from(secret, 'hex');
 
@@ -170,7 +175,7 @@ function doubleSha256(secret: string | buffer) {
                .digest('hex');
 }
 
-function ripemd160(secret: string | buffer) {
+function ripemd160(secret: string | buffer): string {
   if (typeof secret === 'string')
     secret = Buffer.from(secret, 'hex');
 
