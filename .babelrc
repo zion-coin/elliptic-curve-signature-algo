@@ -1,3 +1,5 @@
 {
+  "minified": true,
+  "sourceMap": true,
   "presets": ["flow"]
 }
