@@ -1,4 +1,11 @@
-# elliptic-curve-signature-algo
+# elliptic-curve-signature-algo[![travis][travis-image]][travis-url] [![npm][npm-image]][npm-url] [![downloads][downloads-image]][downloads-url] [![Greenkeeper badge](https://badges.greenkeeper.io/zion-coin/torrent-parser.svg)](https://greenkeeper.io/)
+
+[travis-image]: https://travis-ci.org/zion-coin/torrent-parser.svg?branch=master
+[travis-url]: https://travis-ci.org/zion-coin/torrent-parser
+[npm-image]: https://img.shields.io/npm/v/torrent-parser.svg
+[npm-url]: https://npmjs.org/package/torrent-parser
+[downloads-image]: https://img.shields.io/npm/dm/torrent-parser.svg
+[downloads-url]: https://npmjs.org/package/torrent-parser
 
 ### This is a thorough implementation of the original
 
