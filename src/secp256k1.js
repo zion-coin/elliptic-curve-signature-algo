@@ -110,28 +110,27 @@ function generateSignature(message: string | bigInt, privKey: string | bigInt): 
 
   let signature = modulo(message.add( r.times(privKey) ).times(modInv(RandNum, N)), N);
 
-  return [r, signature];
+  return r.toString(16) + signature.toString(16);
 }
 
-function verifySignature(message: string | bigInt, PublicKey: string | bigInt, signature: Array<string | bigInt>): bool {
+function verifySignature(message: string | bigInt, PublicKey: string | bigInt, signature: string): bool {
   if (typeof message === 'string')
     message = bigInt(message, 16);
   if (typeof PublicKey === 'string')
     PublicKey = bigInt(PublicKey, 16);
-  if (typeof signature[0] === 'string')
-    signature[0] = bigInt(signature[0], 16);
-  if (typeof signature[1] === 'string')
-    signature[1] = bigInt(signature[1], 16);
 
-  let w = modInv(signature[1], N);
+  const r = bigInt(signature.substr(0, 32));
+  const s = bigInt(signature.substr(32, 64));
+
+  let w = modInv(s, N);
 
   let u1 = ECmultiply( GPoint, modulo(message.times(w), N) );
-  let u2 = ECmultiply( PublicKey, modulo(signature[0].times(w), N) )
+  let u2 = ECmultiply( PublicKey, modulo(r.times(w), N) )
 
   let validation = ECadd(u1, u2);
   let validationX = validation[0];
 
-  return validationX.eq(signature[0]);
+  return validationX.eq(r);
 }
 
 // uncompressed is the accumulation of both the x and y points
