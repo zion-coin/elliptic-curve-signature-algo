@@ -1,5 +1,6 @@
 // @flow
-/** This implementation is for educaitonal purposes only
+/*************************************************************************************************************************************************************************
+  * This implementation is for educaitonal purposes only
   * and should not be used in production for obvious reasons.
   * If you would like to contribute, you are more than welcome to.
   *
@@ -8,7 +9,7 @@
   *
   * Actual curve: y^2 = x^3 + Acurve * x + Bcurve
   *
-  **/
+  ************************************************************************************************************************************************************************/
 
 const crypto      = require('crypto');
 const RIPEMD160   = require('ripemd160');
@@ -34,8 +35,8 @@ function modulo(n: bigInt, m: bigInt): bigInt {
   return n.mod(m).add(m).mod(m);
 }
 
-function zfill(s: string): bigInt {
-  while (s.length < 48) {
+function zfill(s: string): string {
+  while (s.length < 64) {
     s = "0" + s;
   }
   return s;
@@ -112,21 +113,25 @@ function generateSignature(message: string | bigInt, privKey: string | bigInt): 
   return [r, signature];
 }
 
-function verifySignature(message: string | bigInt, RandSignPoint: string | bigInt, signature: string | bigInt): bool {
+function verifySignature(message: string | bigInt, PublicKey: string | bigInt, signature: Array<string | bigInt>): bool {
   if (typeof message === 'string')
     message = bigInt(message, 16);
-  if (typeof signature === 'string')
-    signature = bigInt(signature, 16);
+  if (typeof PublicKey === 'string')
+    PublicKey = bigInt(PublicKey, 16);
+  if (typeof signature[0] === 'string')
+    signature[0] = bigInt(signature[0], 16);
+  if (typeof signature[1] === 'string')
+    signature[1] = bigInt(signature[1], 16);
 
-  let w = modInv(signature, N);
+  let w = modInv(signature[1], N);
 
   let u1 = ECmultiply( GPoint, modulo(message.times(w), N) );
-  let u2 = ECmultiply( PublicKey, modulo(r.times(w), N) )
+  let u2 = ECmultiply( PublicKey, modulo(signature[0].times(w), N) )
 
   let validation = ECadd(u1, u2);
   let validationX = validation[0];
 
-  return validationX.eq(RandSignPoint);
+  return validationX.eq(signature[0]);
 }
 
 // uncompressed is the accumulation of both the x and y points
@@ -146,7 +151,7 @@ function PublicKeyGenerate(PrivateKey: string | number | bigInt): Key {
   let Px = zfill(PublicKey[0].toString(16));
   let Py = zfill(PublicKey[1].toString(16));
 
-  let uncompressed = "04" + PublicKey[0].toString(16) + PublicKey[1].toString(16);
+  let uncompressed = "04" + Px + Py;
   let compressed   = (modulo(PublicKey[1], 2).eq(1))
                         ? "03" + Px
                         : "02" + Px;
@@ -154,7 +159,7 @@ function PublicKeyGenerate(PrivateKey: string | number | bigInt): Key {
   return { uncompressed, compressed };
 }
 
-function sha256(secret: string | buffer): string {
+function sha256(secret: string | Buffer): string {
   if (typeof secret === 'string')
     secret = Buffer.from(secret, 'hex');
 
@@ -163,7 +168,7 @@ function sha256(secret: string | buffer): string {
                .digest('hex');
 }
 
-function doubleSha256(secret: string | buffer): string {
+function doubleSha256(secret: string | Buffer): string {
   if (typeof secret === 'string')
     secret = Buffer.from(secret, 'hex');
 
@@ -175,7 +180,7 @@ function doubleSha256(secret: string | buffer): string {
                .digest('hex');
 }
 
-function ripemd160(secret: string | buffer): string {
+function ripemd160(secret: string | Buffer): string {
   if (typeof secret === 'string')
     secret = Buffer.from(secret, 'hex');
 
@@ -183,61 +188,6 @@ function ripemd160(secret: string | buffer): string {
                       .digest('hex');
 }
 
-// console.log();
-// console.log("******* Public Key Generation *********");
-// console.log();
-// let PublicKey = ECmultiply(GPoint, privKey);
-// let Px = zfill(PublicKey[0].toString(16));
-// let Py = zfill(PublicKey[1].toString(16));
-// console.log("the private key:")
-// console.log( bigInt(privKey, 16).toString(10) + " (DECIMAL)" );
-// console.log();
-// console.log("the uncompressed public key (NOT ADDRESS):");
-// console.log(PublicKey[0].toString(16) + PublicKey[1].toString(16));
-// console.log();
-// console.log("the uncompressed public key (HEX):");
-// console.log("04" + Px + Py);
-// console.log();
-// console.log("the official Public Key (Address) - compressed:");
-//
-// if (modulo(PublicKey[1], 2).eq(1)) {
-//   console.log("03" + Px);
-// } else {
-//   console.log("02" + Px);
-// }
-//
-// console.log();
-// console.log("******* Signature Generation *********");
-// let RandSignPoint = ECmultiply(GPoint, RandNum);
-// let Sx = zfill(RandSignPoint[0].toString(16));
-// let Sy = zfill(RandSignPoint[1].toString(16));
-//
-// let r = modulo(RandSignPoint[0], N);
-// console.log("R", r.toString());
-//
-// let s = modulo(HashOfThingToSign.add( r.times(privKey) ).times(modInv(RandNum, N)), N);
-// console.log("S", s.toString());
-// // s = ((HashOfThingToSign + r*privKey)*(modinv(RandNum,N))) % N; print "s =", s
-//
-// console.log();
-// console.log("******* Signature Verification *********");
-//
-// let w = modInv(s, N);
-// console.log("w", w.toString());
-//
-// let u1  = ECmultiply( GPoint, modulo(HashOfThingToSign.times(w), N) );
-// let u1x = u1[0];
-// let u1y = u1[1];
-//
-// let u2 = ECmultiply( PublicKey, modulo(r.times(w), N) )
-// let u2x = u2[0];
-// let u2y = u2[1];
-//
-// let validation = ECadd(u1, u2);
-// let validationX = validation[0];
-//
-// console.log("Signature Verified", validationX.eq(r));
-//
 module.exports = {
   PublicKeyGenerate,
   verifySignature,
