@@ -26,7 +26,7 @@
 
 
 ISC License (ISC)
-Copyright 2017 <Zion Coin>
+Copyright 2017 <PolkaJS>
 Copyright (c) 2004-2010 by Internet Systems Consortium, Inc. ("ISC")
 Copyright (c) 1995-2003 by Internet Software Consortium
 
