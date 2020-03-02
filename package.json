@@ -22,7 +22,7 @@
     "keccakjs": "^0.2.1",
     "secp256k1": "^3.3.0",
     "sha3": "^1.2.0",
-    "tape": "^4.6.3"
+    "tape": "^4.13.2"
   },
   "dependencies": {
     "base58check": "^2.0.0",
